@@ -97,7 +97,9 @@ In: 1,500 | Out: 500 | Cost: $0.0120
 
 #### Example
 
-![Notification Screenshot](docs/images/notification-example.png)
+<p align="center">
+  <img src="docs/images/notification-example.png" alt="Notification Screenshot">
+</p>
 
 ### Cost Calculation
 
