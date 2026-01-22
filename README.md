@@ -2,7 +2,7 @@
 
 > **Claude CLI hook for displaying token usage and cost notifications across platforms**
 
-Worthit is a lightweight hook for Claude CLI that automatically displays token usage and API costs as native notifications after each conversation. Works seamlessly on Windows/WSL, macOS, and Linux.
+Worthit is a lightweight hook for Claude CLI that automatically displays token usage and API costs as native notifications after each conversation. **WorthIt tells you how much a task cost, instead of just telling you that it's finished.** Works seamlessly on Windows/WSL, macOS, and Linux.
 
 ## Features
 
