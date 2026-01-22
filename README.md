@@ -95,6 +95,10 @@ Claude Code recognizes hook scripts from the `~/.claude/hooks/` directory. This 
 In: 1,500 | Out: 500 | Cost: $0.0120
 ```
 
+#### Example
+
+![Notification Screenshot](docs/images/notification-example.png)
+
 ### Cost Calculation
 
 Worthit includes all cost components:
