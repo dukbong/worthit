@@ -75,6 +75,19 @@ Worthit hooks into Claude CLI's `Stop` event (triggered after each conversation 
 3. Calculates costs based on the model used
 4. Displays a native notification with the results
 
+### Hook Directory Structure
+
+Claude Code recognizes hook scripts from the `~/.claude/hooks/` directory. This directory is the required path for Claude Code hooks configuration.
+
+```
+~/.claude/
+├── hooks/
+│   └── worthit.sh    # hook script
+└── settings.json     # hook registration settings
+```
+
+> **Note**: Hook scripts must be located in the `~/.claude/hooks/` directory to work properly with Claude Code.
+
 ### Notification Format
 
 ```
