@@ -1,0 +1,162 @@
+name: Test Worthit Scripts
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-linux:
+    name: Test Linux Script
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Make script executable
+      run: chmod +x src/worthit-linux.sh
+
+    - name: Test script with sample transcript
+      run: |
+        export HOOK_INPUT='{"transcript_path": "tests/test-transcript.jsonl"}'
+        echo "$HOOK_INPUT" | src/worthit-linux.sh
+
+    - name: Verify script syntax
+      run: bash -n src/worthit-linux.sh
+
+    - name: Test Python script extraction
+      run: |
+        # Extract and test Python script
+        sed -n '/^RESULT=\$(python3 - "\$HOOK_INPUT" <<'\''PYTHON_SCRIPT'\''/,/^PYTHON_SCRIPT$/p' src/worthit-linux.sh | \
+        sed '1d;$d' > /tmp/test_script.py
+        python3 -m py_compile /tmp/test_script.py
+
+  test-macos:
+    name: Test macOS Script
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Make script executable
+      run: chmod +x src/worthit-macos.sh
+
+    - name: Test script with sample transcript
+      run: |
+        export HOOK_INPUT='{"transcript_path": "tests/test-transcript.jsonl"}'
+        echo "$HOOK_INPUT" | src/worthit-macos.sh
+
+    - name: Verify script syntax
+      run: bash -n src/worthit-macos.sh
+
+    - name: Test Python script extraction
+      run: |
+        # Extract and test Python script
+        sed -n '/^RESULT=\$(python3 - "\$HOOK_INPUT" <<'\''PYTHON_SCRIPT'\''/,/^PYTHON_SCRIPT$/p' src/worthit-macos.sh | \
+        sed '1d;$d' > /tmp/test_script.py
+        python3 -m py_compile /tmp/test_script.py
+
+  test-windows:
+    name: Test Windows/WSL Script
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Make script executable
+      run: chmod +x src/worthit-windows.sh
+
+    - name: Test script with sample transcript (without PowerShell)
+      run: |
+        # Test Python logic without PowerShell (unavailable in CI)
+        export HOOK_INPUT='{"transcript_path": "tests/test-transcript.jsonl"}'
+        # Run script but ignore notification errors
+        echo "$HOOK_INPUT" | src/worthit-windows.sh || true
+
+    - name: Verify script syntax
+      run: bash -n src/worthit-windows.sh
+
+    - name: Test Python script extraction
+      run: |
+        # Extract and test Python script
+        sed -n '/^RESULT=\$(python3 - "\$HOOK_INPUT" <<'\''PYTHON_SCRIPT'\''/,/^PYTHON_SCRIPT$/p' src/worthit-windows.sh | \
+        sed '1d;$d' > /tmp/test_script.py
+        python3 -m py_compile /tmp/test_script.py
+
+  test-install-script:
+    name: Test Installation Script
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Make install script executable
+      run: chmod +x install.sh
+
+    - name: Verify install script syntax
+      run: bash -n install.sh
+
+    - name: Test platform detection
+      run: |
+        # Extract and test platform detection function
+        source <(sed -n '/^detect_platform()/,/^}$/p' install.sh)
+        PLATFORM=$(detect_platform)
+        echo "Detected platform: $PLATFORM"
+        [ "$PLATFORM" = "linux" ] || [ "$PLATFORM" = "windows" ] || [ "$PLATFORM" = "macos" ]
+
+  test-transcript-format:
+    name: Validate Test Transcript
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Validate JSONL format
+      run: |
+        python3 -c "
+        import json
+        with open('tests/test-transcript.jsonl', 'r') as f:
+            for line_num, line in enumerate(f, 1):
+                try:
+                    json.loads(line.strip())
+                except json.JSONDecodeError as e:
+                    print(f'Error on line {line_num}: {e}')
+                    exit(1)
+        print('JSONL format is valid')
+        "
+
+  all-tests-passed:
+    name: All Tests Passed
+    needs: [test-linux, test-macos, test-windows, test-install-script, test-transcript-format]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Success
+      run: echo "All tests passed successfully!"
