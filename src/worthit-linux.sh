@@ -28,10 +28,10 @@ def get_pricing(model):
     # Claude Haiku 4.5 pricing
     if "haiku" in model_lower:
         return {
-            "input": 0.0000005,
-            "output": 0.000001,
-            "cache_write": 0.000000625,
-            "cache_read": 0.0000005
+            "input": 0.000001,
+            "output": 0.000005,
+            "cache_write": 0.00000125,
+            "cache_read": 0.0000001
         }
 
     # Claude Sonnet 4.5 pricing (default)

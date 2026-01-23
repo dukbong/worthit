@@ -117,7 +117,7 @@ Current Claude API pricing (as of January 2025):
 |-------|--------|--------|-------------|------------|
 | **Opus 4.5** | $5.00 / 1M | $25.00 / 1M | $6.25 / 1M | $0.50 / 1M |
 | **Sonnet 4.5** | $3.00 / 1M | $15.00 / 1M | $3.75 / 1M | $0.30 / 1M |
-| **Haiku 4.5** | $0.50 / 1M | $1.00 / 1M | $0.625 / 1M | $0.05 / 1M |
+| **Haiku 4.5** | $1.00 / 1M | $5.00 / 1M | $1.25 / 1M | $0.10 / 1M |
 
 Prices are automatically converted to per-token costs in the calculation.
 
