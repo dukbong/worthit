@@ -146,8 +146,12 @@ def main():
         pricing = get_pricing(model)
         cost = calculate_cost(totals, pricing)
 
-        # Output in format: "input_tokens|output_tokens|cost|model"
-        print(f"{format_number(totals['input'])}|{format_number(totals['output'])}|{format_cost(cost)}|{format_model_name(model)}")
+        # Calculate aggregated token counts for display
+        total_in = totals['input'] + totals['cache_read'] + totals['cache_write']
+        total_out = totals['output']
+
+        # Output in format: "total_in_tokens|total_out_tokens|cost|model"
+        print(f"{format_number(total_in)}|{format_number(total_out)}|{format_cost(cost)}|{format_model_name(model)}")
 
     except Exception:
         # Gracefully handle errors without output
