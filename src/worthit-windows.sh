@@ -42,6 +42,45 @@ def get_pricing(model):
         "cache_read": 0.0000003
     }
 
+def estimate_output_tokens(message):
+    """
+    Estimate output tokens from actual content length.
+
+    This is a workaround for Claude CLI transcript recording
+    incorrect output_tokens (often 1-2 instead of 100s).
+    """
+    total = 0.0
+
+    for block in message.get('content', []):
+        block_type = block.get('type')
+
+        if block_type == 'text':
+            text = block.get('text', '')
+            # Average: ~3 chars per token (mixed Korean/English)
+            total += len(text) / 3.0
+
+        elif block_type == 'thinking':
+            thinking = block.get('thinking', '')
+            # Thinking blocks: same ratio
+            total += len(thinking) / 3.0
+
+        elif block_type == 'tool_use':
+            # Tool use blocks: tool name + parameters
+            # Typically 50-200 tokens depending on complexity
+            tool_name = block.get('name', '')
+            tool_input = block.get('input', {})
+
+            # Tool name overhead: ~20 tokens for XML structure
+            total += 20
+
+            # Tool parameters: estimate from JSON length
+            import json
+            input_json = json.dumps(tool_input)
+            # Parameters in XML: roughly 1 token per 3 chars
+            total += len(input_json) / 3.0
+
+    return int(total) if total > 0 else 0
+
 def calculate_cost(totals, pricing):
     """Calculate total cost based on token usage and pricing"""
     cost = (
@@ -132,7 +171,12 @@ def main():
                     model = message.get('model', 'unknown')
 
                 totals['input'] += usage.get('input_tokens', 0)
-                totals['output'] += usage.get('output_tokens', 0)
+
+                # Fix: Use estimated output tokens instead of transcript value
+                # Transcript often records 1-2 instead of actual 100s of tokens
+                estimated_output = estimate_output_tokens(message)
+                totals['output'] += estimated_output
+
                 totals['cache_read'] += usage.get('cache_read_input_tokens', 0)
                 totals['cache_write'] += usage.get('cache_creation_input_tokens', 0)
 
