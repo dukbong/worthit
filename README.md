@@ -98,7 +98,7 @@ In: 1,500 | Out: 500 | Cost: $0.0120
 #### Example
 
 <p align="center">
-  <img alt="Notification Screenshot" src="https://github.com/user-attachments/assets/66f674a6-bac5-41f9-9e7f-0d82b21b73b8" />
+  <img alt="Notification Screenshot" src="https://github.com/user-attachments/assets/38d90b1a-7207-4c43-b9f6-1df98ee7d95f" />
 </p>
 
 ### Cost Calculation
