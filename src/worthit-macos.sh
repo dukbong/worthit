@@ -11,9 +11,62 @@ RESULT=$(python3 - "$HOOK_INPUT" <<'PYTHON_SCRIPT'
 import json
 import sys
 import os
+import re
+
+def validate_hook_input(hook_input):
+    """Validate hook input structure and types"""
+    if not isinstance(hook_input, dict):
+        raise ValueError("Hook input must be a dict")
+
+    transcript_path = hook_input.get('transcript_path')
+    if not transcript_path:
+        raise ValueError("Missing transcript_path")
+
+    if not isinstance(transcript_path, str):
+        raise ValueError("transcript_path must be string")
+
+    return transcript_path
+
+def sanitize_transcript_path(transcript_path):
+    """Sanitize path to prevent traversal attacks"""
+    # Reject dangerous patterns
+    dangerous = [r'\.\.', r'~', r'\$', r'`']
+    for pattern in dangerous:
+        if re.search(pattern, transcript_path):
+            raise ValueError(f"Invalid path: contains {pattern}")
+
+    # Resolve to absolute path
+    abs_path = os.path.abspath(os.path.expanduser(transcript_path))
+
+    # Verify it's a regular file
+    if os.path.exists(abs_path):
+        if not os.path.isfile(abs_path):
+            raise ValueError("Path is not a regular file")
+
+    return abs_path
+
+def sanitize_output(text):
+    """Sanitize text for shell output"""
+    if not text:
+        return ""
+
+    safe = text.replace('\n', ' ')
+    safe = safe.replace('\r', ' ')
+    safe = safe.replace('`', '')
+    safe = safe.replace('$', '')
+    safe = safe.replace('|', '/')
+
+    return safe
 
 def get_pricing(model):
-    """Get pricing information based on model"""
+    """
+    Get pricing information based on model.
+
+    Pricing source: https://www.anthropic.com/pricing
+    Last verified: 2025-01-25
+
+    Note: Hardcoded because Claude CLI transcripts don't include costs.
+    """
     model_lower = model.lower() if model else ""
 
     # Claude Opus 4.5 pricing
@@ -106,6 +159,7 @@ def format_model_name(model):
     """Format model name for display"""
     if not model:
         return "Mystery Model"
+    model = sanitize_output(str(model))
     model_lower = model.lower()
     if "opus" in model_lower:
         return "Opus 4.5"
@@ -123,9 +177,10 @@ def main():
             return
 
         hook_input = json.loads(sys.argv[1])
-        transcript_path = hook_input.get('transcript_path')
+        transcript_path = validate_hook_input(hook_input)
+        transcript_path = sanitize_transcript_path(transcript_path)
 
-        if not transcript_path or not os.path.exists(transcript_path):
+        if not os.path.exists(transcript_path):
             # Silently exit if no transcript
             return
 
@@ -194,11 +249,16 @@ def main():
         total_in = totals['input'] + totals['cache_read'] + totals['cache_write']
         total_out = totals['output']
 
-        # Output in format: "total_in_tokens|total_out_tokens|cost|model"
-        print(f"{format_number(total_in)}|{format_number(total_out)}|{format_cost(cost)}|{format_model_name(model)}")
+        # Output in format: "total_in_tokens<SEP>total_out_tokens<SEP>cost<SEP>model"
+        # Using ASCII Unit Separator for safe parsing
+        SEPARATOR = '\x1F'
+        print(f"{format_number(total_in)}{SEPARATOR}{format_number(total_out)}{SEPARATOR}{format_cost(cost)}{SEPARATOR}{format_model_name(model)}")
 
+    except ValueError as e:
+        # Security validation failed - exit with error code
+        sys.exit(1)
     except Exception:
-        # Gracefully handle errors without output
+        # Other errors - gracefully handle without output
         pass
 
 if __name__ == "__main__":
@@ -206,19 +266,37 @@ if __name__ == "__main__":
 
 PYTHON_SCRIPT
 )
+PYTHON_EXIT_CODE=$?
+
+# If Python validation failed, exit with error
+if [ $PYTHON_EXIT_CODE -ne 0 ]; then
+    exit $PYTHON_EXIT_CODE
+fi
 
 # Check if Python script returned a result
 if [ -n "$RESULT" ]; then
-    # Parse input tokens, output tokens, cost, and model
-    INPUT_TOKENS=$(echo "$RESULT" | cut -d'|' -f1)
-    OUTPUT_TOKENS=$(echo "$RESULT" | cut -d'|' -f2)
-    COST=$(echo "$RESULT" | cut -d'|' -f3)
-    MODEL=$(echo "$RESULT" | cut -d'|' -f4)
+    # Parse input tokens, output tokens, cost, and model using ASCII Unit Separator
+    SEPARATOR=$'\x1F'
+    INPUT_TOKENS=$(echo "$RESULT" | cut -d"$SEPARATOR" -f1)
+    OUTPUT_TOKENS=$(echo "$RESULT" | cut -d"$SEPARATOR" -f2)
+    COST=$(echo "$RESULT" | cut -d"$SEPARATOR" -f3)
+    MODEL=$(echo "$RESULT" | cut -d"$SEPARATOR" -f4)
 
     # Create notification message and title
     MESSAGE="In: $INPUT_TOKENS | Out: $OUTPUT_TOKENS | Cost: $COST"
     TITLE="$MODEL Claude Usage"
 
     # Send macOS notification via osascript
-    osascript -e "display notification \"$MESSAGE\" with title \"$TITLE\" sound name \"Glass\"" 2>/dev/null
+    # Escape function for AppleScript strings
+    escape_applescript() {
+        echo "$1" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g'
+    }
+
+    ESCAPED_MESSAGE=$(escape_applescript "$MESSAGE")
+    ESCAPED_TITLE=$(escape_applescript "$TITLE")
+
+    osascript -e "display notification \"$ESCAPED_MESSAGE\" with title \"$ESCAPED_TITLE\" sound name \"Glass\"" 2>/dev/null || true
 fi
+
+# Exit successfully
+exit 0

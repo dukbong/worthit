@@ -152,9 +152,87 @@ jobs:
         print('JSONL format is valid')
         "
 
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Make scripts executable
+      run: chmod +x src/worthit-linux.sh
+
+    - name: Test path traversal protection
+      run: |
+        # These should fail (return non-zero)
+        ! echo '{"transcript_path": "../../etc/passwd"}' | src/worthit-linux.sh
+        ! echo '{"transcript_path": "../../../root/.bashrc"}' | src/worthit-linux.sh
+        echo "✓ Path traversal protection working"
+
+    - name: Test command injection protection
+      run: |
+        # These should fail (return non-zero)
+        ! echo '{"transcript_path": "$(whoami).jsonl"}' | src/worthit-linux.sh
+        ! echo '{"transcript_path": "`whoami`.jsonl"}' | src/worthit-linux.sh
+        ! echo '{"transcript_path": "$HOME/test.jsonl"}' | src/worthit-linux.sh
+        echo "✓ Command injection protection working"
+
+    - name: Test JSON validation
+      run: |
+        # These should fail (return non-zero)
+        ! echo 'not valid json' | src/worthit-linux.sh
+        ! echo '{}' | src/worthit-linux.sh
+        ! echo '{"other_field": "value"}' | src/worthit-linux.sh
+        ! echo '{"transcript_path": 123}' | src/worthit-linux.sh
+        echo "✓ JSON validation working"
+
+  unit-tests:
+    name: Python Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Run sanitization tests
+      run: python3 tests/unit/test_sanitization.py
+
+    - name: Run pricing tests
+      run: python3 tests/unit/test_pricing.py
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Make scripts executable
+      run: chmod +x src/worthit-linux.sh tests/integration/test_full_flow.sh
+
+    - name: Run integration test suite
+      run: tests/integration/test_full_flow.sh
+
   all-tests-passed:
     name: All Tests Passed
-    needs: [test-linux, test-macos, test-windows, test-install-script, test-transcript-format]
+    needs: [test-linux, test-macos, test-windows, test-install-script, test-transcript-format, security-tests, unit-tests, integration-tests]
     runs-on: ubuntu-latest
 
     steps:

@@ -1,0 +1,2 @@
+{"type":"user","timestamp":"2025-01-25T10:00:00Z","message":{"role":"user","content":[{"type":"text","text":"Hello, test opus model"}]}}
+{"type":"assistant","timestamp":"2025-01-25T10:00:05Z","message":{"role":"assistant","model":"claude-opus-4-5-20251101","content":[{"type":"text","text":"This is a test response from Opus 4.5"}],"usage":{"input_tokens":1500,"output_tokens":800,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}

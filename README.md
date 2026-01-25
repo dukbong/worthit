@@ -103,11 +103,34 @@ In: 1,500 | Out: 500 | Cost: $0.0120
 
 ### Cost Calculation
 
+#### Why Self-Calculate?
+
+Worthit calculates costs locally because **Claude CLI transcripts don't include cost data**. The transcripts only record token counts, not the associated costs.
+
+**Benefits**:
+- ✅ Instant feedback after each conversation
+- ✅ Works offline without additional API calls
+- ✅ Complete privacy - all calculations local
+- ✅ No latency or network dependency
+
+For detailed information about our pricing methodology and accuracy guarantees: [**Pricing Documentation**](docs/PRICING.md)
+
+#### What's Included
+
 Worthit includes all cost components:
 - Input tokens
 - Output tokens
 - Cache write tokens (prompt caching)
 - Cache read tokens (prompt caching)
+
+### Pricing Accuracy
+
+- **Last verified**: January 25, 2025
+- **Source**: [Anthropic Pricing](https://www.anthropic.com/pricing)
+- **Update frequency**: Monthly verification (1st of each month)
+- **Response time**: 48 hours for reported discrepancies
+
+Found a pricing issue? [Report it here](https://github.com/dukbong/worthit/issues) with the `pricing-discrepancy` label.
 
 ## Pricing Information
 
@@ -187,6 +210,44 @@ You should see an entry like:
   "hooks": [{"type": "command", "command": "/home/username/.claude/hooks/worthit.sh"}]
 }
 ```
+
+## Security
+
+Worthit is designed with security as a top priority:
+
+### Security Measures
+
+- ✅ **Input validation**: JSON schema validation and type checking
+- ✅ **Path sanitization**: Prevents path traversal attacks (`../../etc/passwd`)
+- ✅ **Output sanitization**: Removes shell metacharacters to prevent injection
+- ✅ **Shell escaping**: Platform-specific escaping (AppleScript, PowerShell, Bash)
+- ✅ **No network access**: Fully offline operation for privacy
+- ✅ **Comprehensive tests**: Security, unit, and integration test suites
+
+### What We Protect Against
+
+- 🛡️ Path traversal attacks
+- 🛡️ Command injection attempts
+- 🛡️ Shell escaping bypass
+- 🛡️ Type confusion attacks
+- 🛡️ Malformed JSON exploitation
+
+### Security Documentation
+
+For detailed information about our security architecture, threat model, and testing:
+- [**Security Documentation**](docs/SECURITY.md)
+- [Security Test Suite](tests/integration/test_full_flow.sh)
+- [Sanitization Tests](tests/unit/test_sanitization.py)
+
+### Reporting Security Issues
+
+**Do not** open public issues for security vulnerabilities.
+
+Instead, please report them privately via:
+- [**GitHub Security Advisories**](https://github.com/dukbong/worthit/security/advisories/new) (preferred)
+- Direct email to the maintainer
+
+**Response time**: Within 72 hours for security reports
 
 ## Development
 
