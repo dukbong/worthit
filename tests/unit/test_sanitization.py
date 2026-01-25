@@ -11,51 +11,11 @@ import os
 import sys
 import re
 
-# Copy the functions from the script for testing
-def validate_hook_input(hook_input):
-    """Validate hook input structure and types"""
-    if not isinstance(hook_input, dict):
-        raise ValueError("Hook input must be a dict")
+# Add src directory to path to import worthit_core
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-    transcript_path = hook_input.get('transcript_path')
-    if not transcript_path:
-        raise ValueError("Missing transcript_path")
-
-    if not isinstance(transcript_path, str):
-        raise ValueError("transcript_path must be string")
-
-    return transcript_path
-
-def sanitize_transcript_path(transcript_path):
-    """Sanitize path to prevent traversal attacks"""
-    # Reject dangerous patterns
-    dangerous = [r'\.\.', r'~', r'\$', r'`']
-    for pattern in dangerous:
-        if re.search(pattern, transcript_path):
-            raise ValueError(f"Invalid path: contains {pattern}")
-
-    # Resolve to absolute path
-    abs_path = os.path.abspath(os.path.expanduser(transcript_path))
-
-    # Verify it's a regular file
-    if os.path.exists(abs_path):
-        if not os.path.isfile(abs_path):
-            raise ValueError("Path is not a regular file")
-
-    return abs_path
-
-def sanitize_output(text):
-    """Sanitize text for shell output"""
-    if not text:
-        return ""
-
-    safe = text.replace('\n', ' ')
-    safe = safe.replace('\r', ' ')
-    safe = safe.replace('`', '')
-    safe = safe.replace('$', '')
-    safe = safe.replace('|', '/')
-
-    return safe
+# Import functions from worthit_core module
+from worthit_core import validate_hook_input, sanitize_transcript_path, sanitize_output
 
 
 class TestHookInputValidation(unittest.TestCase):

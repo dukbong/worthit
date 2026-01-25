@@ -94,16 +94,27 @@ create_directories() {
 download_script() {
     local platform=$1
     local script_name="worthit-${platform}.sh"
-    local download_url="${GITHUB_RAW_URL}/src/${script_name}"
+    local script_url="${GITHUB_RAW_URL}/src/${script_name}"
+    local core_url="${GITHUB_RAW_URL}/src/worthit_core.py"
+    local core_path="$HOOKS_DIR/worthit_core.py"
 
     print_info "Detected platform: $platform"
-    print_info "Downloading script from $download_url"
+    print_info "Downloading platform script from $script_url"
 
-    if curl -fsSL "$download_url" -o "$INSTALL_PATH"; then
+    if curl -fsSL "$script_url" -o "$INSTALL_PATH"; then
         chmod +x "$INSTALL_PATH"
         print_info "Script installed successfully at $INSTALL_PATH"
     else
-        print_error "Failed to download script from $download_url"
+        print_error "Failed to download script from $script_url"
+        exit 1
+    fi
+
+    print_info "Downloading core module from $core_url"
+    if curl -fsSL "$core_url" -o "$core_path"; then
+        chmod +x "$core_path"
+        print_info "Core module installed successfully at $core_path"
+    else
+        print_error "Failed to download core module from $core_url"
         exit 1
     fi
 }

@@ -8,61 +8,14 @@ and that the pricing information is kept up-to-date.
 
 import unittest
 import json
+import sys
+import os
 
-# Copy the functions from the script for testing
-def get_pricing(model):
-    """
-    Get pricing information based on model.
+# Add src directory to path to import worthit_core
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-    Pricing source: https://www.anthropic.com/pricing
-    Last verified: 2025-01-25
-
-    Note: Hardcoded because Claude CLI transcripts don't include costs.
-    """
-    model_lower = model.lower() if model else ""
-
-    # Claude Opus 4.5 pricing
-    if "opus" in model_lower:
-        return {
-            "input": 0.000005,
-            "output": 0.000025,
-            "cache_write": 0.00000625,
-            "cache_read": 0.0000005
-        }
-
-    # Claude Haiku 4.5 pricing
-    if "haiku" in model_lower:
-        return {
-            "input": 0.000001,
-            "output": 0.000005,
-            "cache_write": 0.00000125,
-            "cache_read": 0.0000001
-        }
-
-    # Claude Sonnet 4.5 pricing (default)
-    return {
-        "input": 0.000003,
-        "output": 0.000015,
-        "cache_write": 0.00000375,
-        "cache_read": 0.0000003
-    }
-
-def calculate_cost(totals, pricing):
-    """Calculate total cost based on token usage and pricing"""
-    cost = (
-        totals['input'] * pricing['input'] +
-        totals['output'] * pricing['output'] +
-        totals['cache_write'] * pricing['cache_write'] +
-        totals['cache_read'] * pricing['cache_read']
-    )
-    return cost
-
-def format_cost(cost):
-    """Format cost with appropriate precision"""
-    if cost < 0.0001:
-        return f"${cost:.6f}"
-    else:
-        return f"${cost:.4f}"
+# Import functions from worthit_core module
+from worthit_core import get_pricing, calculate_cost, format_cost
 
 
 class TestPricingAccuracy(unittest.TestCase):
